@@ -27,9 +27,21 @@ class MyApp extends StatelessWidget {
 
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
+  var history = <WordPair> [];
+
+  GlobalKey? historyListKey;
 
   void getNext() {
+    history.insert(0, current);
+    var animatedList = historyListKey?.currentState as AnimatedListState?;
+    animatedList?.insertItem(0);
     current = WordPair.random();
+    notifyListeners();
+  }
+
+  void clearHistory() {
+    history = [];
+    favorites = {};
     notifyListeners();
   }
 
@@ -141,6 +153,59 @@ class FavoritesPage extends StatelessWidget {
   }
 }
 
+class HistoryListView extends StatefulWidget {
+  const HistoryListView({Key? key}) : super(key: key);
+  
+  @override
+  State<HistoryListView> createState() => _HistoryListViewState();
+}
+
+class _HistoryListViewState extends State<HistoryListView> {
+  final _key = GlobalKey();
+  
+  static const Gradient _maskingGradient = LinearGradient (
+    colors: [Colors.transparent, Colors.black],
+    stops: [0.0, 0.5],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = context.watch<MyAppState>();
+    appState.historyListKey = _key;
+
+    return ShaderMask(
+      shaderCallback: (bounds) => _maskingGradient.createShader(bounds),
+
+      blendMode: BlendMode.dstIn,
+      child: AnimatedList(
+        key: _key,
+        reverse: true,
+        padding: EdgeInsets.only(top: 100),
+        initialItemCount: appState.history.length,
+        itemBuilder: (context, index, animation) {
+          print(index);
+          final pair = appState.history[index];
+          return SizeTransition(
+            sizeFactor: animation,
+            child: Center(
+              child: TextButton.icon(
+                onPressed: () => appState.toggleFavorite(pair),
+                icon:  appState.favorites.contains(pair)? Icon(Icons.favorite, size: 12): SizedBox(),
+                label: Text(
+                  pair.asLowerCase,
+                  semanticsLabel: pair.asPascalCase,
+                ),
+              ),
+            ),
+          );
+        }
+      ),
+    );
+  }
+
+}
 
 class GeneratorPage extends StatelessWidget {
   @override
@@ -158,6 +223,11 @@ class GeneratorPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          if(appState.history.isNotEmpty)
+            Expanded(
+              flex: 3,
+              child: HistoryListView()
+            ),
           BigCard(pair: pair),
           SizedBox(height: 10),
           Row(
@@ -176,6 +246,13 @@ class GeneratorPage extends StatelessWidget {
                   appState.getNext();
                 },
                 child: Text('Next'),
+              ),
+              SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () {
+                  appState.clearHistory();
+                },
+                child: Text('Clear'),
               ),
             ],
           ),
