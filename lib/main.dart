@@ -35,11 +35,11 @@ class MyAppState extends ChangeNotifier {
 
   var favorites = <WordPair>{};
 
-  void toggleFavorite() {
-    if (favorites.contains(current)) {
-      favorites.remove(current);
+  void toggleFavorite(WordPair word) {
+    if (favorites.contains(word)) {
+      favorites.remove(word);
     } else {
-      favorites.add(current);
+      favorites.add(word);
     }
     notifyListeners();
   }
@@ -115,7 +115,6 @@ class FavoritesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
-    final theme = Theme.of(context);
     
     if(appState.favorites.isEmpty) {
       return Center(
@@ -131,8 +130,11 @@ class FavoritesPage extends StatelessWidget {
         ),
         for(var word in appState.favorites)
           ListTile(
-            leading: Icon(Icons.favorite),
+            leading: Icon(Icons.delete),
             title: Text(word.asLowerCase),
+            onTap: () {
+              appState.toggleFavorite(word);
+            },
           )
       ]
     );
@@ -163,7 +165,7 @@ class GeneratorPage extends StatelessWidget {
             children: [
               ElevatedButton.icon(
                 onPressed: () {
-                  appState.toggleFavorite();
+                  appState.toggleFavorite(pair);
                 },
                 icon: Icon(icon),
                 label: Text('Like'),
