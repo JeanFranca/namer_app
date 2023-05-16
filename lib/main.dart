@@ -1,6 +1,11 @@
+
+
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import 'package:namer_app/ui/Favorites/favorites_page.dart';
+import 'package:namer_app/ui/Generator/generator_page.dart';
 
 void main() {
   runApp(MyApp());
@@ -115,175 +120,6 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         );
       }
-    );
-  }
-}
-
-class FavoritesPage extends StatelessWidget {
-  const FavoritesPage({
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
-    
-    if(appState.favorites.isEmpty) {
-      return Center(
-        child: Text('No favorites yet.'),
-      );
-    }
-    
-    return ListView(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text('You have ${appState.favorites.length} favorites: '),
-        ),
-        for(var word in appState.favorites)
-          ListTile(
-            leading: Icon(Icons.delete),
-            title: Text(word.asLowerCase),
-            onTap: () {
-              appState.toggleFavorite(word);
-            },
-          )
-      ]
-    );
-  }
-}
-
-class HistoryListView extends StatefulWidget {
-  const HistoryListView({Key? key}) : super(key: key);
-  
-  @override
-  State<HistoryListView> createState() => _HistoryListViewState();
-}
-
-class _HistoryListViewState extends State<HistoryListView> {
-  final _key = GlobalKey();
-  
-  static const Gradient _maskingGradient = LinearGradient (
-    colors: [Colors.transparent, Colors.black],
-    stops: [0.0, 0.5],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final appState = context.watch<MyAppState>();
-    appState.historyListKey = _key;
-
-    return ShaderMask(
-      shaderCallback: (bounds) => _maskingGradient.createShader(bounds),
-
-      blendMode: BlendMode.dstIn,
-      child: AnimatedList(
-        key: _key,
-        reverse: true,
-        padding: EdgeInsets.only(top: 100),
-        initialItemCount: appState.history.length,
-        itemBuilder: (context, index, animation) {
-          print(index);
-          final pair = appState.history[index];
-          return SizeTransition(
-            sizeFactor: animation,
-            child: Center(
-              child: TextButton.icon(
-                onPressed: () => appState.toggleFavorite(pair),
-                icon:  appState.favorites.contains(pair)? Icon(Icons.favorite, size: 12): SizedBox(),
-                label: Text(
-                  pair.asLowerCase,
-                  semanticsLabel: pair.asPascalCase,
-                ),
-              ),
-            ),
-          );
-        }
-      ),
-    );
-  }
-
-}
-
-class GeneratorPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
-    var pair = appState.current;
-
-    IconData icon;
-    icon = Icons.favorite_border;
-    if (appState.favorites.contains(pair)) {
-      icon = Icons.favorite;
-    }
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if(appState.history.isNotEmpty)
-            Expanded(
-              flex: 3,
-              child: HistoryListView()
-            ),
-          BigCard(pair: pair),
-          SizedBox(height: 10),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  appState.toggleFavorite(pair);
-                },
-                icon: Icon(icon),
-                label: Text('Like'),
-              ),
-              SizedBox(width: 10),
-              ElevatedButton(
-                onPressed: () {
-                  appState.getNext();
-                },
-                child: Text('Next'),
-              ),
-              SizedBox(width: 10),
-              ElevatedButton(
-                onPressed: () {
-                  appState.clearHistory();
-                },
-                child: Text('Clear'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class BigCard extends StatelessWidget {
-  const BigCard({
-    super.key,
-    required this.pair,
-  });
-
-  final WordPair pair;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final style = theme.textTheme.displayMedium!.copyWith(
-      color: theme.colorScheme.onPrimary,
-    );
-    
-    return Card(
-      color: theme.colorScheme.primary,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Text(pair.asLowerCase, semanticsLabel:"${pair.first} ${pair.second}", style: style,),
-      ),
     );
   }
 }
